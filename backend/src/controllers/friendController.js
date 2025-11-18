@@ -1,5 +1,5 @@
-import Friend from '../models/friendModel.js';
-import User from '../models/userModel.js';
+import Friend from '../models/Friend.js';
+import User from '../models/User.js';
 import FriendRequest from '../models/FriendRequest.js';
 export const sendFriendRequest = async (req, res) => {
     try {
@@ -52,7 +52,7 @@ export const acceptFriend = async (req, res) => {
             return res.status(404).json({ message: "Yêu cầu kết bạn không tồn tại" });
         }
         // Kiểm tra người dùng có quyền chấp nhận yêu cầu này không
-        if (request.to.toString() !== userId) {
+        if (request.to.toString() !== userId.toString()) {
             return res.status(403).json({ message: "Bạn không có quyền chấp nhận yêu cầu này" });
         }
         // Tạo mối quan hệ bạn bè
@@ -75,7 +75,18 @@ export const acceptFriend = async (req, res) => {
 }
 export const declineFriendRequest = async (req, res) => {
     try {
-        
+        const { requestId } = req.params;
+        const userId = req.user._id;
+        // Kiểm tra yêu cầu kết bạn có tồn tại không
+        const request = await FriendRequest.findById(requestId);
+        if(!request) {
+            return res.status(404).json({ message: "Không tìm thấy lời mời kết bạn " });
+        }
+        if (request.to.toString() !== userId.toString()) {
+            return res.status(403).json({ message: "Bạn không có quyền từ chối yêu cầu này" });
+        }
+        await FriendRequest.findByIdAndDelete(requestId);
+        return res.sendStatus(204);
     } catch (error) {
         console.error("Lỗi khi từ chối yêu cầu kết bạn", error);
         res.status(500).json({ message: "Internal server error" });
