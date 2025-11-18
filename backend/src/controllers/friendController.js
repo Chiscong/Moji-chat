@@ -94,7 +94,24 @@ export const declineFriendRequest = async (req, res) => {
 }
 export const getAllFriends = async (req, res) => {
     try {
-
+        const userId = req.user._id;
+        const friendship = await Friend.find({
+            $or: [
+                { userA: userId },
+                { userB: userId },
+            ]
+        })
+        .populate("userA", "_id displayName avatarUrl")
+        .populate("userB", "_id displayName avatarUrl")
+        .lean();
+        ;
+        if (!friendship.length) {
+            return  res.status(200).json({ friends: [] });
+        }
+        const friends = friendship.map((f) => {
+            f.userA._id.toString() === userId.toString() ? f.userB : f.userA;
+         })
+         return res.status(200).json({ friends });
     } catch (error) {
         console.error("Lỗi khi lấy danh sách bạn bè", error);
         res.status(500).json({ message: "Internal server error" });
@@ -102,7 +119,13 @@ export const getAllFriends = async (req, res) => {
 }
 export const getFriendRequest = async (req, res) => {
     try {
-
+        const userId = req.user._id;
+        const populateFields = '_id username displayName avatarUrl';
+        const [sent , received] = await Promise.all([
+            FriendRequest.find({ from: userId }).populate("to", populateFields).lean(),
+            FriendRequest.find({ to: userId }).populate("from", populateFields).lean()
+        ])
+        res.status(200).json({ sent, received });
     } catch (error) {
         console.error("Lỗi khi lấy danh sách yêu cầu kết bạn", error);
         res.status(500).json({ message: "Internal server error" });
