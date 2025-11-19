@@ -38,5 +38,24 @@ export const sendDirectMessage = async (req, res) => {
     }
 }
 export const sendGroupMessage = async (req, res) => {
-    res.send("Send Group message");
+    try {
+        const { conversationId, content } = req.body;
+        const senderId = req.user._id;
+        const conversation = await req.conversation;
+
+        if (!content) {
+            return res.status(400).json({ message: "Nội dung tin nhắn không được để trống" });
+        }
+        const message = await Message.create({
+            conversationId,
+            senderId,
+            content,
+        });
+        updateConverstationAfterCreateMessage(conversation, message, senderId);
+        await conversation.save();
+        res.status(201).json({ message: "Tin nhắn đã được gửi thành công", data: message });
+    } catch (error) {
+        console.log("Lỗi khi gửi tin nhắn nhóm", error);
+        res.status(500).json({ message: "Internal server error" });
+    }
 }

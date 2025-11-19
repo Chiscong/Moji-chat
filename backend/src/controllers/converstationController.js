@@ -89,25 +89,56 @@ export const getConverstation = async (req, res) => {
                 path: "seenBy",
                 select: "displayName avatarUrl"
             });
-    const formatted = conversations.map((conv) => {
-        const participants = (conv.participants || []).map((p) => ({
-            _id: p.userId?._id,
-            displayName: p.userId?.displayName,
-            avatarUrl: p.userId?.avatarUrl ?? null,
-            joinedAt: p.joinedAt
-        }));
-        return {
-            ...conv.toObject(),
-            unreadCounts: conv.unreadCounts || {},
-            participants,
-        }
-    });
-    return res.status(200).json({ conversations: formatted });
+        const formatted = conversations.map((conv) => {
+            const participants = (conv.participants || []).map((p) => ({
+                _id: p.userId?._id,
+                displayName: p.userId?.displayName,
+                avatarUrl: p.userId?.avatarUrl ?? null,
+                joinedAt: p.joinedAt
+            }));
+            return {
+                ...conv.toObject(),
+                unreadCounts: conv.unreadCounts || {},
+                participants,
+            }
+        });
+        return res.status(200).json({ conversations: formatted });
     } catch (error) {
         console.log("Lỗi khi lấy danh sách cuộc trò chuyện", error);
         res.status(500).json({ message: "Internal server error" });
     }
 }
 export const getMessage = async (req, res) => {
-    res.send("Create converstation");
+    try {
+        const { conversationId } = req.params;
+        const { limit = 50, cursor } = req.query;
+
+        const query = { conversationId };
+
+        if (cursor) {
+            query.createAt = { $lt: new Date(cursor) };
+        }
+
+        let messages = await Message.find(query)
+            .sort({ createdAt: -1 })
+            .limit(Number(limit) + 1);
+
+        let nextCursor = null;
+
+        if (messages.length > Number(limit)) {
+            const nextMessage = messages[messages.length - 1];
+            nextCursor = nextMessage.createdAt.toISOtring();
+            messages.pop();
+        }
+
+        messages = messages.reverse();
+
+        return res.status(200).json({
+            messages,
+            nextCursor,
+        });
+    } catch (error) {
+        console.error("Lỗi xảy ra khi lấy messages", error);
+        return res.status(500).json({ message: "Lỗi hệ thống" });
+    }
 }

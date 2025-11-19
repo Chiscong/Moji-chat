@@ -36,3 +36,22 @@ export const checkFriendship = async (req, res, next) => {
         return res.status(500).json({ message: "Internal server error" });
     }
 }
+export const checkGroupMembership = async (req, res, next) => {
+    try {
+        const { conversationId } = req.body;
+        const userId = req.user._id;
+        const conversation = await Conversation.findById(conversationId);
+        if (!conversation) {
+            return res.status(404).json({ message: "Cuộc trò chuyện không tồn tại" });
+        }
+        const isMember = conversation.participants.some(participant => participant.userId.toString() === userId.toString());
+        if (!isMember) {
+            return res.status(403).json({ message: "Bạn không phải là thành viên của cuộc trò chuyện" });
+        }
+        req.conversation = conversation;
+        next();
+    } catch (error) {
+        console.log("Lỗi xảy ra khi check group membership" , error);
+        return res.status(500).json({ message: "Internal server error" });
+    }
+}
