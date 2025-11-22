@@ -10,7 +10,7 @@ import UnreadBadge from './UnreadBadge'
 
 const DirectMessageCard = ({ conv }: { conv: Conversation }) => {
     const { user } = useAuthStore();
-    const { activeConversationId, setActiveConversation, messages } = useChatStore();
+    const { activeConversationId, setActiveConversation, messages ,fetchMessages } = useChatStore();
     if (!user) return null;
     const otherUser = conv.participants.find((p) => p._id !== user._id);
     if (!otherUser) return null;
@@ -21,6 +21,7 @@ const DirectMessageCard = ({ conv }: { conv: Conversation }) => {
         setActiveConversation(id);
         if (!messages[id]) {
             // todo : fetch
+            await fetchMessages();
         }
     }
     return <ChatCard

@@ -33,11 +33,13 @@ export interface ChatState {
     messages: Record<string, {
         items: Message[];
         hasMore: boolean;
-        nextCursor?: string|null;
+        nextCursor?: string | null;
     }>;
     activeConversationId: string | null;
-    loading: boolean;
+    convoLoading: boolean;
+    messageLoading: boolean;
     reset: () => void;
-    setActiveConversation: (id: string|null) => void;
+    setActiveConversation: (id: string | null) => void;
     fetchConversations: () => Promise<void>;
+    fetchMessages: (ConversationId?: string) => Promise<void>;
 }
