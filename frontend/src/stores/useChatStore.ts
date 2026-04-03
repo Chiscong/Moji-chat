@@ -57,19 +57,19 @@ export const useChatStore = create<ChatState>()(
                         nextCursor
                     );
                     const processed = fetched.map((m) => ({
-                        ...m , 
+                        ...m,
                         isOwn: m.senderId === user?._id
                     }));
-                    set((state)=> {
-                        const prev = state.messages[convoId]?.items ?? [] ;
-                        const merged = prev.length > 0 ? [...processed , ...prev] : processed;
+                    set((state) => {
+                        const prev = state.messages[convoId]?.items ?? [];
+                        const merged = prev.length > 0 ? [...processed, ...prev] : processed;
                         return {
                             messages: {
                                 ...state.messages,
                                 [convoId]: {
                                     items: merged,
                                     hasMore: !!cursor,
-                                    nextCursor: cursor ?? null 
+                                    nextCursor: cursor ?? null
                                 }
                             }
                         }
@@ -81,7 +81,28 @@ export const useChatStore = create<ChatState>()(
                 } finally {
                     set({ messageLoading: false });
                 }
-            }
+            },
+            sendDirectMessage: async (recipientId, content, imgUrl) => {
+                try {
+                    const { activeConversationId } = get();
+                    await chatService.sendDirectMessage(recipientId, content, imgUrl, activeConversationId || undefined);
+                    set((state) => ({
+                        conversations: state.conversations.map((c) => c._id === activeConversationId ? { ...c, seenBy: [] } : c)
+                    }))
+                } catch (error) {
+                    console.error("Error when send direct message:", error)
+                }
+            },
+            sendGroupMessage: async (conversationId, content, imgUrl) => {
+                try {
+                    await chatService.sendGroupMessage(conversationId, content, imgUrl);
+                    set((state) => ({
+                        conversations: state.conversations.map((c) => c._id === get().activeConversationId ? { ...c, seenBy: [] } : c)
+                    }))
+                } catch (error) {
+                    console.error("Error when send group message", error)
+                }
+            },
         }),
         {
             name: "chat-storage",
