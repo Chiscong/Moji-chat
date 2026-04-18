@@ -142,3 +142,15 @@ export const getMessage = async (req, res) => {
         return res.status(500).json({ message: "Lỗi hệ thống" });
     }
 }
+export const getUserConversationForSocketIO = async (userId) => {
+    try {
+        const conversations = await Conversation.find(
+            { "participants.userId": userId },
+            { _id: 1 }
+        );
+        return conversations.map((c) => c._id.toString());
+    } catch (error) {
+        console.error("Error when fetch conversations: ", error)
+        return [];
+    }
+}

@@ -1,22 +1,23 @@
 import Conversation from '../models/Converstation.js';
 import Message from '../models/Message.js';
-import {updateConverstationAfterCreateMessage} from '../utils/messageHelper.js';
+import { emitNewMessage, updateConverstationAfterCreateMessage } from '../utils/messageHelper.js';
+import {io} from "../socket/index.js"
 export const sendDirectMessage = async (req, res) => {
     try {
-        const {recipientId, content, converstationId} = req.body;
+        const { recipientId, content, converstationId } = req.body;
         const senderId = req.user._id;
         let conversation;
-        if(!content) {
+        if (!content) {
             return res.status(400).json({ message: "Nội dung tin nhắn không được để trống" });
         }
-        if(converstationId) {
+        if (converstationId) {
             conversation = await Conversation.findById(converstationId);
         }
-        if(!conversation) {
+        if (!conversation) {
             conversation = new Conversation.create({
                 type: "direct",
                 participants: [
-                    { userId: senderId , joinedAt: new Date() },
+                    { userId: senderId, joinedAt: new Date() },
                     { userId: recipientId, joinedAt: new Date() }
                 ],
                 lastMessageAt: new Date(),
@@ -31,9 +32,10 @@ export const sendDirectMessage = async (req, res) => {
 
         updateConverstationAfterCreateMessage(conversation, message, senderId);
         await conversation.save();
+        emitNewMessage(io, conversation, message)
         res.status(201).json({ message: "Tin nhắn đã được gửi thành công", data: message });
     } catch (error) {
-        console.log("Lỗi khi gửi tin nhắn trực tiếp",error);
+        console.log("Lỗi khi gửi tin nhắn trực tiếp", error);
         res.status(500).json({ message: "Internal server error" });
     }
 }
@@ -53,6 +55,7 @@ export const sendGroupMessage = async (req, res) => {
         });
         updateConverstationAfterCreateMessage(conversation, message, senderId);
         await conversation.save();
+        emitNewMessage(io, conversation, message)
         res.status(201).json({ message: "Tin nhắn đã được gửi thành công", data: message });
     } catch (error) {
         console.log("Lỗi khi gửi tin nhắn nhóm", error);

@@ -45,7 +45,7 @@ export const useChatStore = create<ChatState>()(
                     return;
                 }
                 const current = messages?.[convoId];
-                const nextCursor = current?.nextCursor === undefined ? "" : current?.nextCursor;
+                const nextCursor = current?.nextCursor === undefined ? undefined : current?.nextCursor;
                 if (current && nextCursor === null) {
                     return;
                 }
@@ -54,7 +54,7 @@ export const useChatStore = create<ChatState>()(
                 try {
                     const { messages: fetched, cursor } = await chatService.fetchMessages(
                         convoId,
-                        nextCursor
+                        nextCursor,
                     );
                     const processed = fetched.map((m) => ({
                         ...m,
@@ -69,7 +69,7 @@ export const useChatStore = create<ChatState>()(
                                 [convoId]: {
                                     items: merged,
                                     hasMore: !!cursor,
-                                    nextCursor: cursor ?? null
+                                    nextCursor: cursor ?? undefined
                                 }
                             }
                         }
@@ -102,6 +102,42 @@ export const useChatStore = create<ChatState>()(
                 } catch (error) {
                     console.error("Error when send group message", error)
                 }
+            },
+            addMessage: async (message) => {
+                try {
+                    const { user } = useAuthStore.getState();
+                    const { fetchMessages } = get();
+                    message.isOwn = message.senderId === user?._id;
+                    const convoId = message.conversationId;
+                    let prevItems = get().messages[convoId]?.items ?? [];
+                    if (prevItems.length === 0) {
+                        await fetchMessages(message.conversationId);
+                        prevItems = get().messages[convoId]?.items ?? [];
+                    }
+                    set((state) => {
+                        if (prevItems.some((m) => m._id === message._id)){
+                            return state;
+                        }
+                        return {
+                            messages:{
+                                ...state.messages,
+                                [convoId]:{
+                                    items: [...prevItems, message],
+                                    hasMore: state.messages[convoId].hasMore,
+                                    nextCursor: state.messages[convoId].nextCursor ?? undefined,
+                                }
+                            }
+                        }
+                    })
+                } catch (error) {
+                    console.error("Error when add message:",error);
+                    
+                }
+            },
+            updateConversation: async (conversation) => {
+                set((state) =>{
+                    return { conversations: state.conversations.map((c) => c._id === conversation._id ? {...c, ...conversation}:c) }
+                })
             },
         }),
         {
