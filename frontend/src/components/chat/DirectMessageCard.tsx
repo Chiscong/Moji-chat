@@ -7,9 +7,11 @@ import { cn } from '@/lib/utils'
 import UserAvatar from './UserAvatar'
 import StatusBadge from './StatusBadge'
 import UnreadBadge from './UnreadBadge'
+import { useSocketStore } from '@/stores/useSocketStore'
 
 const DirectMessageCard = ({ conv }: { conv: Conversation }) => {
     const { user } = useAuthStore();
+     const { onlineUsers } = useSocketStore();
     const { activeConversationId, setActiveConversation, messages ,fetchMessages } = useChatStore();
     if (!user) return null;
     const otherUser = conv.participants.find((p) => p._id !== user._id);
@@ -41,7 +43,7 @@ const DirectMessageCard = ({ conv }: { conv: Conversation }) => {
             />
             {/* status badge */}
             <StatusBadge 
-                status='offline'
+                status={onlineUsers.includes(otherUser?._id ?? "") ? "online" : "offline"}
             />
             {/* unread count */}
             {unreadCount > 0 && <UnreadBadge unreadCount={unreadCount}/>}

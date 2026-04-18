@@ -6,11 +6,13 @@ import { Separator } from "@radix-ui/react-separator";
 import UserAvatar from "./UserAvatar";
 import StatusBadge from "./StatusBadge";
 import GroupChatAvatar from "./GroupChatAvatar";
+import { useSocketStore } from "@/stores/useSocketStore";
 
 
 const ChatWindowHeader = ({ chat }: { chat?: Conversation }) => {
     const { conversations, activeConversationId } = useChatStore();
     const { user } = useAuthStore();
+    const { onlineUsers } = useSocketStore();
     let otherUser;
     chat = chat ?? conversations.find((c) => c._id === activeConversationId)
     if (!chat) {
@@ -38,19 +40,19 @@ const ChatWindowHeader = ({ chat }: { chat?: Conversation }) => {
                     <div className="relative">
                         {
                             chat.type === 'direct' ? (
-                            <>
-                            <UserAvatar
-                            type={"sidebar"}
-                            name = {otherUser?.displayName || "User"}
-                            avatarUrl={otherUser?.avatarUrl ?? undefined}
-                            />
-                            {/* to do socket io */}
-                            <StatusBadge status="offline"/>
-                            </>
+                                <>
+                                    <UserAvatar
+                                        type={"sidebar"}
+                                        name={otherUser?.displayName || "User"}
+                                        avatarUrl={otherUser?.avatarUrl ?? undefined}
+                                    />
+                                    {/* to do socket io */}
+                                    <StatusBadge status={onlineUsers.includes(otherUser?._id ?? "") ? "online" : "offline"} />
+                                </>
                             ) : (
                                 <GroupChatAvatar
-                                 participants={chat.participants}
-                                 type = "sidebar"
+                                    participants={chat.participants}
+                                    type="sidebar"
                                 />
                             )
                         }
@@ -58,7 +60,7 @@ const ChatWindowHeader = ({ chat }: { chat?: Conversation }) => {
                     {/* name */}
                     <h2 className="font-semibold text-foreground ">
                         {
-                            chat.type ==="direct" ? otherUser?.displayName : chat.group?.name
+                            chat.type === "direct" ? otherUser?.displayName : chat.group?.name
                         }
                     </h2>
                 </div>
