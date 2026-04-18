@@ -2,17 +2,17 @@ import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import cookieParser from 'cookie-parser';
-import  {connectDB}  from './libs/db.js';
+import { connectDB } from './libs/db.js';
 import authRoute from './routes/authRoute.js';
 import userRoute from './routes/userRoute.js';
 import friendRoute from './routes/friendRoute.js';
 import messageRoute from './routes/messageRoute.js';
 import converstationRoute from './routes/converstationRoute.js';
 import { protectedRoute } from './middlewares/authMiddleware.js';
-
+import { app, server } from './socket/index.js';
 dotenv.config();
 
-const app = express();
+// const app = express();
 const PORT = process.env.PORT || 5001;
 
 app.use(cors({
@@ -31,5 +31,5 @@ app.use('/api/friends', friendRoute)
 app.use('/api/messages', messageRoute)
 app.use('/api/conversations', converstationRoute)
 connectDB().then(() => {
-    app.listen(PORT, () => { console.log(`Server running on port ${PORT}`) });
+    server.listen(PORT, () => { console.log(`Server running on port ${PORT}`) });
 });

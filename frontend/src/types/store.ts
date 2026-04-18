@@ -1,5 +1,6 @@
 import type { User } from "./user";
 import type { Conversation, Message } from "./chat";
+import type { Socket } from "socket.io-client";
 export interface AuthState {
     accessToken: string | null;
     user: User | null;
@@ -52,4 +53,9 @@ export interface ChatState {
         content: string,
         imrUrl: string
     ) => Promise<void>
+}
+export interface SocketState{
+    socket: Socket | null;
+    connectSocket: () => void;
+    disconnectSocket: () =>  void;
 }
