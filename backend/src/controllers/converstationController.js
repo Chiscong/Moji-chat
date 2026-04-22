@@ -154,3 +154,49 @@ export const getUserConversationForSocketIO = async (userId) => {
         return [];
     }
 }
+export const markAsSeen = async (req, res) => {
+    try {
+        const { conversationId } = req.params;
+        const userId = req.user._id.toString();
+
+        const conversation = await Conversation.findById(conversationId).lean();
+        if (!conversation) {
+            return res.status(404).json({ message: " Conversation doesn't exist" })
+        }
+        const last = conversation.lastMessage;
+        if (!last) {
+            return res.status(200).json({ message: "There are no messages to mark as read " })
+        }
+        if (last.senderId.toString() === userId) {
+            return res.status(200).json({ message: "No need to mark as read" })
+        }
+        const updated = await conversation.findByIdAndUpdate(conversationId,
+            {
+                $addToSet: { seenBy: userId },
+                $set: { [`unreadCounts.${userId}`]: 0 }
+            }, {
+            new: true
+        }
+        );
+        io.to(conversationId).emit("read-message",{
+            conversation: updated,
+            lastMessage:{
+                _id:updated?.lastMessage._id,
+                content: updated?.lastMessage.content,
+                createdAt: updated?.lastMessage.createdAt,
+                sender:{
+                    _id: updated?.lastMessage.senderId,
+                }
+            }
+        });
+
+        return res.status(200).json({
+            message:"Marked as seen",
+            seenBy: updated?.seenBy || [],
+            myUnreadCount: updated?.unreadCounts[userId] || 0;
+        })
+    } catch (error) {
+        console.error("Error when Mark As Seen:", error);
+        return res.status(500).json({message:"Server Error"})
+    }
+}

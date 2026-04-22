@@ -56,7 +56,8 @@ export interface ChatState {
     // add messages
     addMessage: (message: Message) => Promise<void>;
     //update convo
-    updateConversation: (conversation: Conversation) => Promise<void>;
+    updateConversation: (conversation: unknown) => Promise<void>;
+    markAsSeen: () => Promise<void>;
 }
 export interface SocketState{
     socket: Socket | null;

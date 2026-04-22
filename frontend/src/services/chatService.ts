@@ -27,5 +27,9 @@ export const chatService = {
             conversationId, content, imageUrl
         })
         return res.data.message;
-    }
+    },
+    async markAsSeen(conversationId: string){
+        const res = await api.patch(`/conversation/${conversationId}/seen`);
+        return res.data;
+    } 
 }

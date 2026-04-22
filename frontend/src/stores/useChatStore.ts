@@ -1,3 +1,4 @@
+
 import { chatService } from '@/services/chatService';
 import type { ChatState } from '@/types/store'
 import { create } from 'zustand'
@@ -40,44 +41,47 @@ export const useChatStore = create<ChatState>()(
             fetchMessages: async (conversationId) => {
                 const { activeConversationId, messages } = get();
                 const { user } = useAuthStore.getState();
+
                 const convoId = conversationId ?? activeConversationId;
-                if (!convoId) {
-                    return;
-                }
+
+                if (!convoId) return;
+
                 const current = messages?.[convoId];
-                const nextCursor = current?.nextCursor === undefined ? undefined : current?.nextCursor;
-                if (current && nextCursor === null) {
-                    return;
-                }
+                const nextCursor =
+                    current?.nextCursor === undefined ? "" : current?.nextCursor;
+
+                if (nextCursor === null) return;
+
                 set({ messageLoading: true });
 
                 try {
                     const { messages: fetched, cursor } = await chatService.fetchMessages(
                         convoId,
-                        nextCursor,
+                        nextCursor
                     );
+
                     const processed = fetched.map((m) => ({
                         ...m,
-                        isOwn: m.senderId === user?._id
+                        isOwn: m.senderId === user?._id,
                     }));
+
                     set((state) => {
                         const prev = state.messages[convoId]?.items ?? [];
                         const merged = prev.length > 0 ? [...processed, ...prev] : processed;
+
                         return {
                             messages: {
                                 ...state.messages,
                                 [convoId]: {
                                     items: merged,
                                     hasMore: !!cursor,
-                                    nextCursor: cursor ?? undefined
-                                }
-                            }
-                        }
-                    })
-
+                                    nextCursor: cursor ?? null,
+                                },
+                            },
+                        };
+                    });
                 } catch (error) {
-                    console.log("Lỗi khi fetch message ", error);
-
+                    console.error("Lỗi xảy ra khi fetchMessages:", error);
                 } finally {
                     set({ messageLoading: false });
                 }
@@ -115,13 +119,13 @@ export const useChatStore = create<ChatState>()(
                         prevItems = get().messages[convoId]?.items ?? [];
                     }
                     set((state) => {
-                        if (prevItems.some((m) => m._id === message._id)){
+                        if (prevItems.some((m) => m._id === message._id)) {
                             return state;
                         }
                         return {
-                            messages:{
+                            messages: {
                                 ...state.messages,
-                                [convoId]:{
+                                [convoId]: {
                                     items: [...prevItems, message],
                                     hasMore: state.messages[convoId].hasMore,
                                     nextCursor: state.messages[convoId].nextCursor ?? undefined,
@@ -130,14 +134,52 @@ export const useChatStore = create<ChatState>()(
                         }
                     })
                 } catch (error) {
-                    console.error("Error when add message:",error);
-                    
+                    console.error("Error when add message:", error);
+
                 }
             },
             updateConversation: async (conversation) => {
-                set((state) =>{
-                    return { conversations: state.conversations.map((c) => c._id === conversation._id ? {...c, ...conversation}:c) }
+                set((state) => {
+                    return { conversations: state.conversations.map((c) => c._id === conversation._id ? { ...c, ...conversation } : c) }
                 })
+            },
+            markAsSeen: async () => {
+                try {
+                    const { user } = useAuthStore.getState();
+                    const { activeConversationId, conversations } = get();
+
+                    if (!activeConversationId || !user) {
+                        return;
+                    }
+
+                    const convo = conversations.find((c) => c._id === activeConversationId);
+
+                    if (!convo) {
+                        return;
+                    }
+
+                    if ((convo.unreadCounts?.[user._id] ?? 0) === 0) {
+                        return;
+                    }
+
+                    await chatService.markAsSeen(activeConversationId);
+
+                    set((state) => ({
+                        conversations: state.conversations.map((c) =>
+                            c._id === activeConversationId && c.lastMessage
+                                ? {
+                                    ...c,
+                                    unreadCounts: {
+                                        ...c.unreadCounts,
+                                        [user._id]: 0,
+                                    },
+                                }
+                                : c
+                        ),
+                    }));
+                } catch (error) {
+                    console.error("Lỗi xảy ra khi gọi markAsSeen trong store", error);
+                }
             },
         }),
         {
