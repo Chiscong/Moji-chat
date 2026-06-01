@@ -18,18 +18,25 @@ const MessageItem = ({
   selectedConvo,
   lastMessageStatus,
 }: MessageItemProps) => {
-  const prev = messages[index - 1];
-  const isGroupBreak =
-    index === 0 ||
-    message.senderId !== prev?.senderId ||
+  const prev = index + 1 < messages.length ? messages[index + 1] : undefined;
+
+  const isShowTime =  index === 0 ||
     new Date(message.createdAt).getTime() -
-      new Date(prev?.createdAt || 0).getTime() >
-      5 * 60 * 1000;
-  const participant = selectedConvo.participants.find(
+    new Date(prev?.createdAt || 0).getTime() > 5 * 60 * 1000;
+  const isGroupBreak = isShowTime || message.senderId !== prev?.senderId ; 
+   
+
+    const participant = selectedConvo.participants.find(
     (p: Participant) => p._id.toString() === message.senderId.toString(),
   );
   return (
-    <div
+    <>
+       {isShowTime && (
+          <span className="text-xs text-muted-foreground px-1">
+            {formatMessageTime(new Date(message.createdAt))}
+          </span>
+        )}
+         <div
       className={cn(
         "flex gap-2 message-bounce mt-1",
         message.isOwn ? "justify-end" : "justify-start",
@@ -66,11 +73,7 @@ const MessageItem = ({
             {message.content}
           </p>
         </Card>
-        {isGroupBreak && (
-          <span className="text-xs text-muted-foreground px-1">
-            {formatMessageTime(new Date(message.createdAt))}
-          </span>
-        )}
+     
         {/* seen & delivered status */}
         {message.isOwn && message._id === selectedConvo.lastMessage?._id && (
           <Badge
@@ -87,6 +90,8 @@ const MessageItem = ({
         )}
       </div>
     </div>
+    </>
+   
   );
 };
 

@@ -116,7 +116,7 @@ export const getMessage = async (req, res) => {
         const query = { conversationId };
 
         if (cursor) {
-            query.createAt = { $lt: new Date(cursor) };
+            query.createdAt = { $lt: new Date(cursor) };
         }
 
         let messages = await Message.find(query)
@@ -127,12 +127,11 @@ export const getMessage = async (req, res) => {
 
         if (messages.length > Number(limit)) {
             const nextMessage = messages[messages.length - 1];
-            nextCursor = nextMessage.createdAt.toISOtring();
+            nextCursor = nextMessage.createdAt.toISOString();
             messages.pop();
         }
 
         messages = messages.reverse();
-
         return res.status(200).json({
             messages,
             nextCursor,
@@ -142,7 +141,7 @@ export const getMessage = async (req, res) => {
         return res.status(500).json({ message: "Lỗi hệ thống" });
     }
 }
-export const getUserConversationForSocketIO = async (userId) => {
+export const getUserConversationsForSocketIO = async (userId) => {
     try {
         const conversations = await Conversation.find(
             { "participants.userId": userId },
@@ -193,7 +192,7 @@ export const markAsSeen = async (req, res) => {
         return res.status(200).json({
             message:"Marked as seen",
             seenBy: updated?.seenBy || [],
-            myUnreadCount: updated?.unreadCounts[userId] || 0;
+            myUnreadCount: updated?.unreadCounts[userId] || 0,
         })
     } catch (error) {
         console.error("Error when Mark As Seen:", error);
