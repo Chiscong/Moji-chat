@@ -65,3 +65,10 @@ export interface SocketState{
     connectSocket: () => void;
     disconnectSocket: () =>  void;
 }
+export interface FriendState {
+    loading: boolean;
+    searchUserByUsername: (username: string) => Promise<User | null>;
+    addFriend: (to: string, message: string) => Promise<string>;
+    // getFriendRequest: () => Promise<{ sent: Friend[], received: Friend[] }>;
+    // getFriends: () => Promise<Friend[]>;
+}

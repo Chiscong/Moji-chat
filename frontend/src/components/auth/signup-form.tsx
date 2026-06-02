@@ -59,14 +59,14 @@ export function SignupForm({
                     Họ
                   </Label>
                   <Input type="text" id="lastname" placeholder=" Họ" {...register("lastname")} />
-                  {errors.lastname && <p className="text-destructive text-sm">{errors.lastname.message}</p>}
+                  {errors.lastname && <p className="errors-message">{errors.lastname.message}</p>}
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="firstname" className="block text-sm">
                     Tên
                   </Label>
                   <Input type="text" id="firstname" placeholder=" Tên" {...register("firstname")} />
-                  {errors.firstname && <p className="text-destructive text-sm">{errors.firstname.message}</p>}
+                  {errors.firstname && <p className="errors-message">{errors.firstname.message}</p>}
                 </div>
               </div>
               {/* username */}
@@ -75,7 +75,7 @@ export function SignupForm({
                   Tên đăng nhập
                 </Label>
                 <Input type="text" id="username" placeholder="Tên đăng nhập" {...register("username")} />
-                {errors.username && <p className="text-destructive text-sm">{errors.username.message}</p>}
+                {errors.username && <p className="errors-message">{errors.username.message}</p>}
 
               </div>
               {/* email */}
@@ -84,7 +84,7 @@ export function SignupForm({
                   Email
                 </Label>
                 <Input type="email" id="email" placeholder="Email" {...register("email")} />
-                {errors.email && <p className="text-destructive text-sm">{errors.email.message}</p>}
+                {errors.email && <p className="errors-message">{errors.email.message}</p>}
 
               </div>
               {/* password */}
@@ -101,7 +101,7 @@ export function SignupForm({
                   placeholder="Mật khẩu"
                   {...register("password")}
                 />
-                {errors.password && <p className="text-destructive text-sm">{errors.password.message}</p>}
+                {errors.password && <p className="errors-message">{errors.password.message}</p>}
 
               </div>
 
